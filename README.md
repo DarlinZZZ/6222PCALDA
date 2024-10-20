@@ -1,2 +1,3 @@
 # 6222PCALDA
 6222assignment1
+PCA+LDA linear+knn IRIS+MNIST
