@@ -13,9 +13,6 @@ from numpy.linalg import inv, det, LinAlgError
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.decomposition import IncrementalPCA
 
-
-
-# 1. 加载MNIST数据集方法、
 def load_iris_data():
     iris = load_iris()
     X = iris.data
@@ -36,22 +33,24 @@ def load_cifar10_data():
     return X, y
 
 
-# 3. 数据集划分方法（7:3比例）
 def preprocess_data(X, y, test_size=0.3, random_state=42):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
     return X_train, X_test, y_train, y_test
 
 
-# 4. 数据标准化
 def standardize_data(X):
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     return X_scaled
 
+# def apply_pca(X_scaled, n_components, batch_size=800):
+#     pca = IncrementalPCA(n_components=n_components, batch_size=batch_size)
+#     X_reduced = pca.fit_transform(X_scaled)
+#     X_reconstructed = pca.inverse_transform(X_reduced)
+#     return X_reduced, X_reconstructed
 
-# 5. PCA降维方法
-def apply_pca(X_scaled, n_components, batch_size=800):
-    pca = IncrementalPCA(n_components=n_components, batch_size=batch_size)
+def apply_pca(X_scaled, n_components):
+    pca = PCA(n_components=n_components)
     X_reduced = pca.fit_transform(X_scaled)
     X_reconstructed = pca.inverse_transform(X_reduced)
     return X_reduced, X_reconstructed
@@ -64,7 +63,6 @@ def apply_lda(X_train, y_train, X_test, n_components):
     return X_train_reduced, X_test_reduced
 
 
-# 6. 计算欧式距离重构损失
 def calculate_reconstruction_loss_euclidean(X_original, X_reconstructed):
     loss = np.mean(np.sum((X_original - X_reconstructed) ** 2, axis=1))
     return loss
@@ -85,7 +83,6 @@ def calculate_reconstruction_loss_mahalanobis(X_original, X_reconstructed):
         return None
 
 
-# 8. 计算KL散度重构损失（判断协方差矩阵是否奇异）
 def calculate_reconstruction_loss_kl(X_original, X_reconstructed):
     try:
         mean_original = np.mean(X_original, axis=0)
@@ -110,7 +107,6 @@ def calculate_reconstruction_loss_kl(X_original, X_reconstructed):
         return None
 
 
-# 9. 线性分类器（Logistic Regression）
 def linear_classifier(X_train, y_train, X_test, y_test):
     clf = LogisticRegression(max_iter=1000)
     clf.fit(X_train, y_train)
@@ -119,7 +115,6 @@ def linear_classifier(X_train, y_train, X_test, y_test):
     return accuracy
 
 
-# 10. 最近邻分类器（K-Nearest Neighbors）
 def nearest_neighbor_classifier(X_train, y_train, X_test, y_test, n_neighbors=5):
     clf = KNeighborsClassifier(n_neighbors=n_neighbors)
     clf.fit(X_train, y_train)
@@ -159,25 +154,25 @@ def mahalanobis_classifier(X_train, y_train, X_test):
 '''
 
 
-# 11. 可视化原始图像和重构图像
-def visualize_original_vs_reconstructed(X_original, X_reconstructed, index, img_shape=(28, 28)):
+import matplotlib.pyplot as plt
+
+def visualize_original_vs_reconstructed(m_dimension, X_original, X_reconstructed, index, img_shape=(28, 28)):
     original_image = X_original[index].reshape(img_shape)
     reconstructed_image = X_reconstructed[index].reshape(img_shape)
 
     plt.figure(figsize=(8, 4))
+    plt.suptitle(f'm_dimension: {m_dimension}')
 
     plt.subplot(1, 2, 1)
     plt.imshow(original_image, cmap='gray')
-    plt.title('原始图像')
+    plt.title('Original Image')
 
     plt.subplot(1, 2, 2)
     plt.imshow(reconstructed_image, cmap='gray')
-    plt.title('重构图像')
+    plt.title('Reconstructed Image')
 
     plt.show()
 
-
-# 12. 主函数
 def main(m_dimention, dataset,DR, classifier_type='linear'):
     # 加载数据集
     if dataset == 1:
@@ -221,7 +216,8 @@ def main(m_dimention, dataset,DR, classifier_type='linear'):
         # 可视化部分原始图像与重构图像
         if dataset == 2 and 3:
             index = np.random.randint(0, X_train_scaled.shape[0])
-            visualize_original_vs_reconstructed(X_train_scaled, X_train_reconstructed, index, img_shape)
+            fixed_index = 0
+            visualize_original_vs_reconstructed(m_dimention, X_train_scaled, X_train_reconstructed, fixed_index, img_shape)
         else:
             print('no image for iris')
 
@@ -274,4 +270,5 @@ if __name__ == "__main__":
     PCA 最大降维维度为 min(样本数−1,特征数)  
     LDA 最大降维维度为 类别数-1
     '''
-    main(m_dimention=700, dataset=2, DR='PCA', classifier_type='Both')
+    main(m_dimention=4, dataset=1, DR='LDA', classifier_type='Both')
+    # main(m_dimention=10, dataset=2, DR='LDA', classifier_type='Both')
